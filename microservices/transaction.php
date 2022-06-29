@@ -20,8 +20,8 @@ $connection->prepare("INSERT INTO `transactions` (account_id, amount, type, memo
 // Update account amount
 if ($type == 1) {
     // deposito
-    $connection->exec("UPDATE account SET balance = balance + $amount WHERE id = $account_id");
+    $connection->exec("UPDATE accounts SET balance = balance + $amount WHERE id = $account_id");
 } else {
     // retiro
-    $connection->exec("UPDATE account SET balance = balance - $amount WHERE id = $account_id");
+    $connection->exec("UPDATE accounts SET balance = balance - $amount WHERE id = $account_id");
 }

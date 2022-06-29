@@ -7,7 +7,7 @@ $page_size = $_GET['page_size'] ?? 10;
 $page = $_GET['page'] ?? 1;
 
 // select
-$sql = "SELECT `transactions`.*, accounts.name FROM `transactions` left join accounts on (transactions.account_id = accounts.id) ORDER BY `transactions`.created_at DESC LIMIT :page_size OFFSET :offset";
+$sql = "SELECT `transactions`.*, accounts.name FROM `transactions` left join accounts on (transactions.account_id = accounts.id) ORDER BY `transactions`.created_at DESC, `transactions`.id DESC LIMIT :page_size OFFSET :offset";
 $stmt = $connection->prepare($sql);
 $stmt->execute([
     'page_size' => $page_size,

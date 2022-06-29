@@ -4,20 +4,20 @@
   const api_base = "https://callizaya.com/api.php/casita/";
   let account_id = "1";
   let amount = "";
-  let type = "1";
+  let type = "-1";
   let memo = "";
   let created_at = dayjs().format("YYYY-MM-DD");
+  let accounts = null;
+  let transactions = null;
   // Fecth accounts from API
   async function fetchAccounts() {
     const response = await fetch(api_base + "accounts");
-    const data = await response.json();
-    return data;
+    accounts = await response.json();
   }
   // Fetch last 10 transactions from API
   async function fetchTransactions() {
     const response = await fetch(api_base + "transactions?page_size=10");
-    const data = await response.json();
-    return data;
+    transactions = await response.json();
   }
   function formatNumber(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -39,30 +39,76 @@
     const data = await response.json();
     account_id = "1";
     amount = "";
-    type = "1";
+    type = "-1";
     memo = "";
     created_at = dayjs().format("YYYY-MM-DD");
+    fetchAccounts();
+    fetchTransactions();
     return data;
   }
+  // LOAD
+  fetchAccounts();
+  fetchTransactions();
 </script>
 
 <main>
-  {#await fetchAccounts()}
-    ...
-  {:then accounts}
+  {#if accounts}
     <div class="table">
       {#each accounts as account}
         <div><b>{account.name}:</b> {formatNumber(account.balance)}</div>
       {/each}
     </div>
-  {:catch error}
-    <b>Error</b> {error}
-  {/await}
+  {/if}
+  <form on:submit|preventDefault={registerTransaction}>
+    <hr />
+    <div>
+      <label for="account">Cuenta</label>
+      <select name="account_id" id="account_id" bind:value={account_id}>
+        {#if accounts}
+          {#each accounts as account}
+            <option value={account.id}>{account.name}</option>
+          {/each}
+        {/if}
+      </select>
+    </div>
+    <div>
+      <label for="memo">Fecha</label>
+      <input
+        type="date"
+        name="created_at"
+        id="created_at"
+        required
+        bind:value={created_at}
+      />
+    </div>
+    <div>
+      <label for="memo">Memo</label>
+      <input name="memo" id="memo" required bind:value={memo} />
+    </div>
+    <div>
+      <label for="amount">Monto</label>
+      <input
+        type="number"
+        name="amount"
+        id="amount"
+        required
+        bind:value={amount}
+      />
+    </div>
+    <div>
+      <label for="type">Tipo</label>
+      <select name="type" id="type" bind:value={type}>
+        <option value="1">Deposito</option>
+        <option value="-1">Gasto</option>
+      </select>
+    </div>
+    <div>
+      <button type="submit">REGISTRAR TRANSACCIÓN</button>
+    </div>
+  </form>
   <div class="transactions">
     <hr />
-    {#await fetchTransactions()}
-      ...
-    {:then transactions}
+    {#if transactions}
       <table>
         <tr>
           <th>Cuenta</th>
@@ -81,61 +127,8 @@
           </tr>
         {/each}
       </table>
-    {:catch error}
-      <b>Error</b> {error}
-    {/await}
-    <hr />
+    {/if}
   </div>
-  <form on:submit|preventDefault={registerTransaction}>
-    <div>
-      <label for="account">Cuenta</label>
-      <select name="account_id" id="account_id" bind:value={account_id}>
-        {#await fetchAccounts()}
-          ...
-        {:then accounts}
-          {#each accounts as account}
-            <option value={account.id}>{account.name}</option>
-          {/each}
-        {:catch error}
-          <b>Error</b> {error}
-        {/await}
-      </select>
-    </div>
-    <div>
-      <label for="amount" required>Monto</label>
-      <input type="number" name="amount" id="amount" bind:value={amount} />
-    </div>
-    <div>
-      <label for="type">Tipo</label>
-      <select name="type" id="type" bind:value={type}>
-        <option value="1">Deposito</option>
-        <option value="-1">Retiro</option>
-      </select>
-    </div>
-    <div>
-      <label for="memo">Memo</label>
-      <textarea
-        name="memo"
-        id="memo"
-        cols="30"
-        rows="3"
-        required
-        bind:value={memo}
-      />
-    </div>
-    <div>
-      <label for="memo">Fecha</label>
-      <input
-        type="date"
-        name="created_at"
-        id="created_at"
-        bind:value={created_at}
-      />
-    </div>
-    <div>
-      <button type="submit">REGISTRAR TRANSACCIÓN</button>
-    </div>
-  </form>
 </main>
 
 <style>
@@ -154,10 +147,8 @@
     display: flex;
     flex-direction: column;
     width: 100vw;
-    height: 100vh;
     align-items: center;
     justify-content: start;
-    overflow: hidden;
   }
 
   form {
@@ -202,9 +193,18 @@
   table th {
     text-align: left;
     border: 1px solid #ccc;
+    font-size: 10pt;
   }
   table td {
     padding: 0.5rem;
     border: 1px solid #ccc;
+    font-size: 10pt;
+  }
+  .transaction-1 {
+    text-align: right;
+  }
+  .transaction--1 {
+    text-align: right;
+    color: red;
   }
 </style>
