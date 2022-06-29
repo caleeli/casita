@@ -2,7 +2,7 @@
   import dayjs from "dayjs";
 
   const api_base = "https://callizaya.com/api.php/casita/";
-  let account_id = "1";
+  let account_id = "4";
   let amount = "";
   let type = "-1";
   let memo = "";
@@ -37,7 +37,7 @@
       }),
     });
     const data = await response.json();
-    account_id = "1";
+    //account_id = "1";
     amount = "";
     type = "-1";
     memo = "";
@@ -169,9 +169,6 @@
   div input {
     flex-grow: 1;
     padding: 0.5rem 0;
-  }
-  div textarea {
-    flex-grow: 1;
   }
   button {
     padding: 1rem;

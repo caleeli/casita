@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "deploy": "npm run build && node node_modules/gh-pages/bin/gh-pages.js",
+    "deploy": "npm run build && node node_modules/gh-pages/bin/gh-pages.js -d dist",
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview"
