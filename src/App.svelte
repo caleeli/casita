@@ -51,6 +51,9 @@
     return data;
   }
   async function removeTransaction(transaction) {
+    if (!confirm(`Remover la transacción de ${transaction.memo} por Bs. ${transaction.amount}?`)) {
+      return;
+    }
     const response = await fetch(
       api_base + "remove_transaction/" + transaction.id,
       {
@@ -60,13 +63,11 @@
     const data = await response.json();
     fetchAccounts();
     fetchTransactions();
-    if (data) {
-      account_id = data.account_id;
-      amount = data.amount;
-      type = data.type;
-      memo = data.memo;
-      created_at = data.created_at;
-    }
+    account_id = transaction.account_id;
+    amount = transaction.amount;
+    type = transaction.type;
+    memo = transaction.memo;
+    created_at = transaction.created_at;
   }
   // LOAD
   fetchAccounts();
