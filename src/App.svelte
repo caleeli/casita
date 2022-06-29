@@ -2,7 +2,7 @@
   import dayjs from "dayjs";
 
   const api_base = "https://callizaya.com/api.php/casita/";
-  let account_id = "4";
+  let account_id = "";
   let amount = "";
   let type = "-1";
   let memo = "";
@@ -23,6 +23,10 @@
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
   async function registerTransaction() {
+    if (!account_id) {
+      alert("Seleccione una cuenta");
+      return;
+    }
     const response = await fetch(api_base + "transaction", {
       method: "POST",
       headers: {
@@ -37,7 +41,7 @@
       }),
     });
     const data = await response.json();
-    //account_id = "1";
+    account_id = "";
     amount = "";
     type = "-1";
     memo = "";
@@ -63,7 +67,8 @@
     <hr />
     <div>
       <label for="account">Cuenta</label>
-      <select name="account_id" id="account_id" bind:value={account_id}>
+      <select name="account_id" id="account_id" bind:value={account_id} required>
+        <option value="">-- Seleccione --</option>
         {#if accounts}
           {#each accounts as account}
             <option value={account.id}>{account.name}</option>
