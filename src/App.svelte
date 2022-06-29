@@ -50,6 +50,24 @@
     fetchTransactions();
     return data;
   }
+  async function removeTransaction(transaction) {
+    const response = await fetch(
+      api_base + "remove_transaction/" + transaction.id,
+      {
+        method: "DELETE",
+      }
+    );
+    const data = await response.json();
+    fetchAccounts();
+    fetchTransactions();
+    if (data) {
+      account_id = data.account_id;
+      amount = data.amount;
+      type = data.type;
+      memo = data.memo;
+      created_at = data.created_at;
+    }
+  }
   // LOAD
   fetchAccounts();
   fetchTransactions();
@@ -67,7 +85,12 @@
     <hr />
     <div>
       <label for="account">Cuenta</label>
-      <select name="account_id" id="account_id" bind:value={account_id} required>
+      <select
+        name="account_id"
+        id="account_id"
+        bind:value={account_id}
+        required
+      >
         <option value="">-- Seleccione --</option>
         {#if accounts}
           {#each accounts as account}
@@ -120,6 +143,7 @@
           <th>Monto</th>
           <th>Fecha</th>
           <th>Descripción</th>
+          <th />
         </tr>
         {#each transactions as transaction}
           <tr>
@@ -129,6 +153,13 @@
             >
             <td>{transaction.created_at}</td>
             <td>{transaction.memo}</td>
+            <td
+              ><button
+                type="button"
+                class="delete"
+                on:click={() => removeTransaction(transaction)}>x</button
+              ></td
+            >
           </tr>
         {/each}
       </table>
@@ -175,9 +206,16 @@
     flex-grow: 1;
     padding: 0.5rem 0;
   }
-  button {
+  button[type="submit"] {
     padding: 1rem;
     width: 100%;
+  }
+  button.delete {
+    padding: 0rem 0.5rem;
+    color: red;
+    background-color: transparent;
+    border: 1px solid lightgray;
+    border-radius: 4px;
   }
   div.table {
     width: calc(100% - 2rem);

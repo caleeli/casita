@@ -22,6 +22,6 @@ if ($type == 1) {
     // deposito
     $connection->exec("UPDATE accounts SET balance = balance + $amount WHERE id = $account_id");
 } else {
-    // retiro
+    // gasto
     $connection->exec("UPDATE accounts SET balance = balance - $amount WHERE id = $account_id");
 }

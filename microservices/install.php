@@ -3,6 +3,8 @@
 // sqlite connection
 $connection = new PDO('sqlite:db/estado.db');
 
+return "disabled";
+
 // drop table if exists
 $connection->exec("DROP TABLE IF EXISTS `accounts`");
 $connection->exec("DROP TABLE IF EXISTS `transactions`");
