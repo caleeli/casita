@@ -14,9 +14,9 @@
     const response = await fetch(api_base + "accounts");
     accounts = await response.json();
   }
-  // Fetch last 10 transactions from API
+  // Fetch last 50 transactions from API
   async function fetchTransactions() {
-    const response = await fetch(api_base + "transactions?page_size=10");
+    const response = await fetch(api_base + "transactions?page_size=50");
     transactions = await response.json();
   }
   function formatNumber(number) {
