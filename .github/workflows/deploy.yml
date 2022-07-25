@@ -19,7 +19,6 @@ jobs:
           git remote -v
           npm install
           echo "$API_BASE"
-          npm run deploy -- -u "David Callizaya <davidcallizaya@gmail.com>" -d public
+          npm run deploy -- -u "David Callizaya <davidcallizaya@gmail.com>" -d dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          API_BASE: https://callizaya.com/api.php/lechon
