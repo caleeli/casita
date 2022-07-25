@@ -2,6 +2,7 @@
   import dayjs from "dayjs";
 
   const api_base = "https://callizaya.com/api.php/casita/";
+  let transaction_id = "";
   let account_id = "";
   let amount = "";
   let type = "-1";
@@ -14,9 +15,9 @@
     const response = await fetch(api_base + "accounts");
     accounts = await response.json();
   }
-  // Fetch last 50 transactions from API
+  // Fetch last 100 transactions from API
   async function fetchTransactions() {
-    const response = await fetch(api_base + "transactions?page_size=50");
+    const response = await fetch(api_base + "transactions?page_size=100");
     transactions = await response.json();
   }
   function formatNumber(number) {
@@ -69,6 +70,57 @@
     memo = transaction.memo;
     created_at = transaction.created_at;
   }
+  async function editTransaction(transaction) {
+    fetchAccounts();
+    fetchTransactions();
+    transaction_id = transaction.id;
+    account_id = transaction.account_id;
+    amount = transaction.amount;
+    type = transaction.type;
+    memo = transaction.memo;
+    created_at = transaction.created_at;
+  }
+  async function saveEditTransaction() {
+    if (!transaction_id) {
+      alert("Falta ID de la transaccion");
+      return;
+    }
+    if (!account_id) {
+      alert("Seleccione una cuenta");
+      return;
+    }
+    const response = await fetch(api_base + "update_transaction/" + transaction_id, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        account_id,
+        amount,
+        type,
+        memo,
+        created_at,
+      }),
+    });
+    const data = await response.json();
+    account_id = "";
+    amount = "";
+    type = "-1";
+    memo = "";
+    created_at = dayjs().format("YYYY-MM-DD");
+    transaction_id = "";
+    fetchAccounts();
+    fetchTransactions();
+    return data;
+  }
+  function cancelEdit() {
+    transaction_id = "";
+    account_id = "";
+    amount = "";
+    type = "-1";
+    memo = "";
+    created_at = dayjs().format("YYYY-MM-DD");
+  }
   // LOAD
   fetchAccounts();
   fetchTransactions();
@@ -82,7 +134,7 @@
       {/each}
     </div>
   {/if}
-  <form on:submit|preventDefault={registerTransaction}>
+  <form on:submit|preventDefault={() => transaction_id ? saveEditTransaction() : registerTransaction()}>
     <hr />
     <div>
       <label for="account">Cuenta</label>
@@ -132,7 +184,12 @@
       </select>
     </div>
     <div>
-      <button type="submit">REGISTRAR TRANSACCIÓN</button>
+      {#if transaction_id}
+      <button type="submit" class="edit">ACTUALIZAR TRANSACCIÓN</button>
+      <button type="reset" class="cancel" on:click={cancelEdit}>CANCELAR EDICIÓN</button>
+      {:else}
+      <button type="submit" class="create">REGISTRAR TRANSACCIÓN</button>
+      {/if}
     </div>
   </form>
   <div class="transactions">
@@ -140,6 +197,7 @@
     {#if transactions}
       <table>
         <tr>
+          <th>#</th>
           <th>Cuenta</th>
           <th>Monto</th>
           <th>Fecha</th>
@@ -148,19 +206,29 @@
         </tr>
         {#each transactions as transaction}
           <tr>
+            <td>{transaction.id}</td>
             <td>{transaction.name}</td>
             <td class={`transaction-${transaction.type}`}
               >{formatNumber(transaction.amount)}</td
             >
             <td>{transaction.created_at}</td>
             <td>{transaction.memo}</td>
-            <td
-              ><button
+            <td>
+              <button
                 type="button"
                 class="delete"
-                on:click={() => removeTransaction(transaction)}>x</button
-              ></td
-            >
+                on:click={() => editTransaction(transaction)}
+              >
+                🖊️
+              </button>
+              <button
+                type="button"
+                class="delete"
+                on:click={() => removeTransaction(transaction)}
+              >
+                x
+              </button>
+            </td>
           </tr>
         {/each}
       </table>
@@ -247,5 +315,11 @@
   .transaction--1 {
     text-align: right;
     color: red;
+  }
+  button.edit {
+    background-color: lightgreen;
+  }
+  button.cancel {
+    background-color: lightsalmon;
   }
 </style>
