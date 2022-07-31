@@ -28,7 +28,7 @@ $connection->exec("CREATE TABLE IF NOT EXISTS `transactions` (
 
 // create accounts
 // General
-$connection->exec("INSERT INTO accounts (name, balance) VALUES ('General', 0)");
+// $connection->exec("INSERT INTO accounts (name, balance) VALUES ('General', 0)");
 // David
 $connection->exec("INSERT INTO accounts (name, balance) VALUES ('David', 0)");
 // Patricia
