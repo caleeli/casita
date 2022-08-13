@@ -27,7 +27,7 @@
     summary = await response.json();
   }
   function formatNumber(number) {
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return String(number).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
   async function registerTransaction() {
     if (!account_id) {
