@@ -11,6 +11,7 @@
   let created_at = dayjs().format("YYYY-MM-DD");
   let accounts = null;
   let transactions = null;
+  let summary = [];
   // Fecth accounts from API
   async function fetchAccounts() {
     const response = await fetch(api_base + "accounts");
@@ -20,6 +21,10 @@
   async function fetchTransactions() {
     const response = await fetch(api_base + "transactions?page_size=100");
     transactions = await response.json();
+  }
+  async function fetchSummary() {
+    const response = await fetch(api_base + "summary");
+    summary = await response.json();
   }
   function formatNumber(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -134,9 +139,17 @@
     api_base = `https://callizaya.com/api.php/${fondo}/`;
     fetchAccounts();
     fetchTransactions();
+    fetchSummary();
   }
 </script>
 
+{#if summary}
+  <div class="table">
+    {#each summary as record}
+      <div><b>{record.name}:</b> {formatNumber(record.balance)}</div>
+    {/each}
+  </div>
+{/if}
 {#if accounts}
   <div class="table">
     {#each accounts as account}
