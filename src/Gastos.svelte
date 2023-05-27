@@ -12,6 +12,10 @@
   let accounts = null;
   let transactions = null;
   let summary = [];
+  let filter_account_id = "";
+  let filter_amount = "";
+  let filter_created_at = "";
+  let filter_memo = "";
   // Fecth accounts from API
   async function fetchAccounts() {
     const response = await fetch(api_base + "accounts");
@@ -19,7 +23,26 @@
   }
   // Fetch last 100 transactions from API
   async function fetchTransactions() {
-    const response = await fetch(api_base + "transactions?page_size=100");
+    // prepare filter params
+    let params = [];
+    if (filter_account_id) {
+      params.push(`account_id=${filter_account_id}`);
+    }
+    if (filter_amount) {
+      params.push(`amount=${filter_amount}`);
+    }
+    if (filter_created_at) {
+      params.push(`created_at=${filter_created_at}`);
+    }
+    if (filter_memo) {
+      params.push(`memo=${filter_memo}`);
+    }
+    // fetch transactions
+    const response = await fetch(
+      api_base +
+      "transactions?page_size=100" +
+      (params.length ? "&" + params.join("&") : "")
+    );
     transactions = await response.json();
   }
   async function fetchSummary() {
@@ -134,6 +157,9 @@
     memo = "";
     created_at = dayjs().format("YYYY-MM-DD");
   }
+  async function filterTransactions() {
+    return fetchTransactions();
+  }
   // LOAD
   $: if (fondo) {
     api_base = `https://callizaya.com/api.php/${fondo}/`;
@@ -226,6 +252,31 @@
         <th>Fecha</th>
         <th>Descripción</th>
         <th />
+      </tr>
+      <tr>
+        <th></th>
+        <th>
+          <select bind:value={filter_account_id} required>
+            <option value="">-- Seleccione --</option>
+            {#if accounts}
+              {#each accounts as account}
+                <option value={account.id}>{account.name}</option>
+              {/each}
+            {/if}
+          </select>
+        </th>
+        <th>
+          <input bind:value={filter_amount} />
+        </th>
+        <th>
+          <input type="date" bind:value={filter_created_at} />
+        </th>
+        <th>
+          <input bind:value={filter_memo} style="width: 95%"/>
+        </th>
+        <th>
+          <button type="button" on:click={filterTransactions}>FILTRAR</button>
+        </th>
       </tr>
       {#each transactions as transaction}
         <tr>
