@@ -79,6 +79,7 @@ $: api_base = `${API_BASE}/${fondo}/`;
   }
 
   function formatNumber(number) {
+    if (!number) return "0";
     return String(number).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
@@ -221,11 +222,35 @@ $: api_base = `${API_BASE}/${fondo}/`;
 
 <style>
   :root {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background: #f6f8fa;
+    color: #222;
   }
   :global(body, html) {
     margin: 0;
     padding: 0;
+    background: #f6f8fa;
+    width: 100vw;
+  }
+  :global(*) {
+    box-sizing: border-box;
+  }
+  main, .main-content {
+    max-width: 1100px;
+    margin: 2rem auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    padding: 2rem 2.5rem 2.5rem 2.5rem;
+  }
+  h1, h2, h3 {
+    font-weight: 600;
+    color: #2d3a4a;
+    margin-bottom: 1rem;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #e0e4ea;
+    margin: 2rem 0 1.5rem 0;
   }
 </style>

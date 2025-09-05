@@ -1,32 +1,69 @@
 <style>
 form {
-  width: calc(100% - 2rem);
+  width: 100%;
+  background: #fafdff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  margin-bottom: 2rem;
 }
 form div {
   display: flex;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 div label {
   display: block;
-  width: 100px;
+  width: 110px;
+  color: #4a5a6a;
+  font-weight: 500;
+  font-size: 1em;
 }
-div select {
+div select, div input {
   flex-grow: 1;
-  padding: 0.5rem 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #dbe3ea;
+  border-radius: 6px;
+  font-size: 1em;
+  background: #fff;
+  margin-left: 0.5rem;
+  transition: border 0.2s;
 }
-div input {
-  flex-grow: 1;
-  padding: 0.5rem 0;
+div select:focus, div input:focus {
+  border: 1.5px solid #6cb4f7;
+  outline: none;
 }
-button[type="submit"] {
-  padding: 1rem;
+button[type="submit"], button.cancel, button.create {
+  padding: 0.9rem 1.5rem;
   width: 100%;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.08em;
+  font-weight: 600;
+  background: linear-gradient(90deg, #6cb4f7 0%, #4e9efc 100%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(76, 175, 255, 0.08);
+  margin-bottom: 0.5rem;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+button[type="submit"]:hover, button.create:hover {
+  background: linear-gradient(90deg, #4e9efc 0%, #6cb4f7 100%);
+  box-shadow: 0 4px 16px rgba(76, 175, 255, 0.13);
 }
 button.edit {
-  background-color: lightgreen;
+  background: linear-gradient(90deg, #7ed957 0%, #4caf50 100%);
+  color: #fff;
+}
+button.edit:hover {
+  background: linear-gradient(90deg, #4caf50 0%, #7ed957 100%);
 }
 button.cancel {
-  background-color: lightsalmon;
+  background: linear-gradient(90deg, #ffb199 0%, #ff0844 100%);
+  color: #fff;
+}
+button.cancel:hover {
+  background: linear-gradient(90deg, #ff0844 0%, #ffb199 100%);
 }
 </style>
 <script>
@@ -52,7 +89,6 @@ button.cancel {
 </script>
 
 <form on:submit={handleSubmit}>
-  <hr />
   <div>
     <label for="account">Cuenta</label>
     <select name="account_id" id="account_id" bind:value={account_id} required>
