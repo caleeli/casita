@@ -1,7 +1,7 @@
 <?php
 
 // sqlite connection
-$connection = new PDO('sqlite:db/estado.db');
+//$connection = new PDO('sqlite:db/estado.db');
 
 // create tables if not exists
 // table: account

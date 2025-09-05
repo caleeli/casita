@@ -1,7 +1,7 @@
 <?php
 
 // sqlite connection
-$connection = new PDO('sqlite:db/estado.db');
+//$connection = new PDO('sqlite:db/estado.db');
 
 // update transaction
 $id = $path_params[1];

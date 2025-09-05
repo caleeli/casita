@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // sqlite connection
-$connection = new PDO('sqlite:db/estado.db');
+//$connection = new PDO('sqlite:db/estado.db');
 
 // return all accounts
 $summary = $connection

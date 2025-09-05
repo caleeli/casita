@@ -1,7 +1,7 @@
 <?php
 
 // sqlite connection
-$connection = new PDO('sqlite:db/estado.db');
+//$connection = new PDO('sqlite:db/estado.db');
 
 // insert transaction
 $account_id = $_POST['account_id'];
