@@ -4,7 +4,7 @@
 $email = $_SESSION['email'] ?? null;
 if (!$email) {
     http_response_code(401);
-    return ["error" => "Unauthorized"];
+    return ["error" => "Unauthorized", "dbg" => $_SESSION];
 }
 
 // sqlite connection
