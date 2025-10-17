@@ -4,21 +4,24 @@
 $email = $_SESSION['email'] ?? null;
 if (!$email) {
     http_response_code(401);
-    return ["error" => "Unauthorized", "dbg" => $_SESSION];
+    return ["error" => "Unauthorized"];
 }
 
-// sqlite connection
-$connection = new PDO('sqlite:db/main.db');
+global $connection;
 
 $connection->exec("CREATE TABLE IF NOT EXISTS wallet_by_email (
     id INTEGER PRIMARY KEY,
-    name TEXT,
+    name TEXT,ad
     email TEXT,
     archived INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
+try {
 $connection->exec("CREATE INDEX wallet_by_email_idx ON wallet_by_email (email);");
+} catch (Exception $e) {
+    // Index might already exist
+}
 
 $wallet = $connection->query("SELECT `name` FROM wallet_by_email WHERE email = '$email'")->fetchAll(PDO::FETCH_ASSOC);
 
