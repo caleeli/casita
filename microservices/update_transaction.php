@@ -4,7 +4,7 @@
 //$connection = new PDO('sqlite:db/estado.db');
 
 // update transaction
-$id = $path_params[1];
+$id = $path_params[3];
 $account_id = $_POST['account_id'];
 $amount = abs($_POST['amount']);
 $type = $_POST['type'];

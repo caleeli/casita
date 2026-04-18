@@ -4,7 +4,7 @@
 //$connection = new PDO('sqlite:db/estado.db');
 
 // insert transaction
-$id = $path_params[1];
+$id = $path_params[3];
 
 // select transaction
 $sql = "SELECT * FROM `transactions` WHERE id = :id";
