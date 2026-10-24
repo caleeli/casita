@@ -99,6 +99,20 @@
     color: #667085;
     text-align: center;
   }
+  .transactions-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.8rem;
+  }
+  .transactions-toolbar button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+  .csv-error {
+    color: #b42318;
+  }
 </style>
 <script>
   import { createEventDispatcher } from 'svelte';
@@ -112,6 +126,8 @@
   export let loading = false;
   export let error = "";
   export let showMoveButton = false;
+  export let exportingCsv = false;
+  export let exportError = "";
 
   const dispatch = createEventDispatcher();
 
@@ -127,9 +143,18 @@
   function handleFilter() {
     dispatch('filter');
   }
+  function handleDownload() {
+    dispatch('download');
+  }
 </script>
 
 <div class="transactions">
+  <div class="transactions-toolbar">
+    <button type="button" on:click={handleDownload} disabled={exportingCsv}>
+      {exportingCsv ? "Preparando CSV…" : "Descargar todos en CSV"}
+    </button>
+    {#if exportError}<span class="csv-error">{exportError}</span>{/if}
+  </div>
   {#if loading}
     <div>Cargando...</div>
   {:else if error}

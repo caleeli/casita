@@ -27,6 +27,8 @@ $: api_base = `${API_BASE}/${fondo}/`;
   let showAnnualReport = false;
   let annualReportLoading = false;
   let annualReportError = "";
+  let exportingCsv = false;
+  let csvExportError = "";
   let movingTransaction = null;
   let moveTargets = [];
   let moveFondo = "";
@@ -76,6 +78,59 @@ $: api_base = `${API_BASE}/${fondo}/`;
       error = "Error cargando transacciones";
     } finally {
       loading = false;
+    }
+  }
+
+  async function downloadAllCsv() {
+    const pageSize = 1000;
+    let page = 1;
+    let allTransactions = [];
+
+    try {
+      exportingCsv = true;
+      csvExportError = "";
+      while (true) {
+        const response = await fetch(`${api_base}transactions?page_size=${pageSize}&page=${page}`);
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `No se pudieron descargar los registros (${response.status})`);
+        if (!Array.isArray(result)) throw new Error("La respuesta del servidor no contiene una lista de registros");
+
+        allTransactions = allTransactions.concat(result);
+        if (result.length < pageSize) break;
+        page += 1;
+      }
+
+      const csvRows = [
+        ["ID", "Cuenta", "Tipo", "Monto", "Fecha", "Descripción"],
+        ...allTransactions.map((transaction) => [
+          transaction.id,
+          transaction.name,
+          Number(transaction.type) === 1 ? "Ingreso" : "Gasto",
+          transaction.amount,
+          transaction.created_at,
+          transaction.memo,
+        ]),
+      ];
+      const csvField = (value) => {
+        let text = String(value ?? "");
+        if (/^[\t\r ]*[=+\-@]/.test(text)) text = `'${text}`;
+        return `"${text.replace(/"/g, '""')}"`;
+      };
+      const csvContent = "\uFEFF" + csvRows.map((row) => row.map(csvField).join(",")).join("\r\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeFundName = String(fondo).replace(/[^a-z0-9_-]+/gi, "-");
+      link.href = downloadUrl;
+      link.download = `registros-${safeFundName}-${dayjs().format("YYYYMMDD")}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+    } catch (e) {
+      csvExportError = e.message || "No se pudo descargar el CSV";
+    } finally {
+      exportingCsv = false;
     }
   }
 
@@ -390,9 +445,12 @@ $: api_base = `${API_BASE}/${fondo}/`;
   {loading}
   {error}
   showMoveButton={moveTargets.length > 0}
+  {exportingCsv}
+  exportError={csvExportError}
   on:edit={e => editTransaction(e.detail)}
   on:remove={e => removeTransaction(e.detail)}
   on:move={e => openMoveDialog(e.detail)}
+  on:download={downloadAllCsv}
   on:filter={filterTransactions}
 />
 
