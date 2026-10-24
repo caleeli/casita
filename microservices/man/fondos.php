@@ -4,7 +4,7 @@ global $connection;
 
 $connection->exec("CREATE TABLE IF NOT EXISTS wallet_by_email (
     id INTEGER PRIMARY KEY,
-    name TEXT,ad
+    name TEXT,
     email TEXT,
     archived INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
