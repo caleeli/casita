@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 export let fondo = "casita";
+export let fondos = [];
 $: api_base = `${API_BASE}/${fondo}/`;
 
   // Transaction form state
@@ -26,6 +27,13 @@ $: api_base = `${API_BASE}/${fondo}/`;
   let showAnnualReport = false;
   let annualReportLoading = false;
   let annualReportError = "";
+  let movingTransaction = null;
+  let moveTargets = [];
+  let moveFondo = "";
+  let moveAccounts = [];
+  let moveAccountId = "";
+  let moveLoading = false;
+  let moveError = "";
 
   // Filters
   let filter_account_id = "";
@@ -94,6 +102,74 @@ $: api_base = `${API_BASE}/${fondo}/`;
       annualReportError = "Error cargando el reporte anual";
     } finally {
       annualReportLoading = false;
+    }
+  }
+
+  async function fetchMoveAccounts() {
+    if (!moveFondo) return;
+    moveLoading = true;
+    moveError = "";
+    moveAccounts = [];
+    moveAccountId = "";
+    try {
+      const response = await fetch(`${API_BASE}/${encodeURIComponent(moveFondo)}/accounts`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "No se pudieron cargar las cuentas");
+      moveAccounts = result;
+    } catch (e) {
+      moveError = e.message || "No se pudieron cargar las cuentas del fondo";
+    } finally {
+      moveLoading = false;
+    }
+  }
+
+  async function openMoveDialog(transaction) {
+    if (!moveTargets.length) {
+      alert("No hay otro fondo disponible para mover este registro.");
+      return;
+    }
+    movingTransaction = transaction;
+    moveFondo = moveTargets[0].name;
+    await fetchMoveAccounts();
+  }
+
+  async function moveTransaction() {
+    if (!movingTransaction || !moveFondo || !moveAccountId) {
+      moveError = "Seleccione el fondo y la cuenta de destino.";
+      return;
+    }
+
+    const targetFund = moveTargets.find((item) => item.name === moveFondo);
+    const targetAccount = moveAccounts.find((item) => String(item.id) === String(moveAccountId));
+    if (!targetFund || !targetAccount) {
+      moveError = "La cuenta seleccionada ya no está disponible.";
+      return;
+    }
+
+    if (!confirm(`Mover “${movingTransaction.memo}” de ${fondo} a ${moveFondo}, cuenta ${targetAccount.name}?`)) return;
+
+    try {
+      moveLoading = true;
+      moveError = "";
+      const response = await fetch(api_base + "move_transaction/" + movingTransaction.id, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target_fondo: moveFondo, account_id: moveAccountId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || `No se pudo mover el registro (${response.status})`);
+
+      movingTransaction = null;
+      await Promise.all([
+        fetchAccounts(),
+        fetchTransactions(),
+        fetchSummary(),
+        showAnnualReport ? fetchAnnualReport() : Promise.resolve(),
+      ]);
+    } catch (e) {
+      moveError = e.message || "No se pudo mover el registro";
+    } finally {
+      moveLoading = false;
     }
   }
 
@@ -222,6 +298,7 @@ $: api_base = `${API_BASE}/${fondo}/`;
   }
 
   $: if (fondo && showAnnualReport) fetchAnnualReport();
+  $: moveTargets = fondos.filter((item) => !item.archived && item.name !== fondo);
   $: annualTotals = annualReport.reduce((totals, year) => {
     totals.construction += Number(year.construction) || 0;
     totals.rest += Number(year.rest) || 0;
@@ -307,10 +384,52 @@ $: api_base = `${API_BASE}/${fondo}/`;
   {formatNumber}
   {loading}
   {error}
+  showMoveButton={moveTargets.length > 0}
   on:edit={e => editTransaction(e.detail)}
   on:remove={e => removeTransaction(e.detail)}
+  on:move={e => openMoveDialog(e.detail)}
   on:filter={filterTransactions}
 />
+
+{#if movingTransaction}
+  <div class="move-dialog-backdrop">
+    <section class="move-dialog" role="dialog" aria-modal="true" aria-labelledby="move-dialog-title">
+      <h2 id="move-dialog-title">Mover registro a otro fondo</h2>
+      <p class="move-transaction-description">
+        {movingTransaction.memo} · Bs. {formatNumber(movingTransaction.amount)} · {movingTransaction.created_at}
+      </p>
+
+      <label for="move-fondo">Fondo de destino</label>
+      <select id="move-fondo" bind:value={moveFondo} on:change={fetchMoveAccounts} disabled={moveLoading}>
+        {#each moveTargets as target (target.name)}
+          <option value={target.name}>{target.name}</option>
+        {/each}
+      </select>
+
+      <label for="move-account">Cuenta de destino</label>
+      <select id="move-account" bind:value={moveAccountId} disabled={moveLoading || !moveAccounts.length}>
+        <option value="">Seleccione una cuenta</option>
+        {#each moveAccounts as account (account.id)}
+          <option value={account.id}>{account.name}</option>
+        {/each}
+      </select>
+
+      {#if moveError}<p class="move-error">{moveError}</p>{/if}
+      {#if !moveLoading && !moveError && !moveAccounts.length}
+        <p>El fondo elegido no tiene cuentas disponibles.</p>
+      {/if}
+
+      <div class="move-dialog-actions">
+        <button type="button" class="move-cancel" on:click={() => (movingTransaction = null)} disabled={moveLoading}>
+          Cancelar
+        </button>
+        <button type="button" on:click={moveTransaction} disabled={moveLoading || !moveAccounts.length}>
+          {moveLoading ? "Procesando…" : "Mover registro"}
+        </button>
+      </div>
+    </section>
+  </div>
+{/if}
 
 <style>
   :root {
@@ -393,5 +512,58 @@ $: api_base = `${API_BASE}/${fondo}/`;
   }
   .annual-report-error {
     color: #b42318;
+  }
+  .move-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.45);
+  }
+  .move-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    width: min(100%, 460px);
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  }
+  .move-dialog h2,
+  .move-dialog p {
+    margin: 0;
+  }
+  .move-dialog label {
+    margin-top: 0.4rem;
+    font-weight: 600;
+  }
+  .move-dialog select {
+    width: 100%;
+    margin: 0;
+    padding: 0.65rem;
+  }
+  .move-transaction-description {
+    color: #475467;
+  }
+  .move-error {
+    color: #b42318;
+  }
+  .move-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+  }
+  .move-dialog-actions .move-cancel {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #344054;
+  }
+  .move-dialog-actions .move-cancel:hover {
+    background: #f1f5f9;
   }
 </style>

@@ -96,7 +96,7 @@
         {/each}
         <button class="home-btn" on:click={() => (fondo = "")}>🏠</button>
       </nav>
-      <Gastos {fondo} />
+      <Gastos {fondo} {fondos} />
     {/if}
   {/if}
 </main>

@@ -85,6 +85,9 @@
     background: #ffeaea;
     border: none;
   }
+  button.table-row-button.move {
+    color: #2563eb !important;
+  }
   .filter-account {
     width: 100%;
   }
@@ -103,6 +106,7 @@
   export let formatNumber;
   export let loading = false;
   export let error = "";
+  export let showMoveButton = false;
 
   const dispatch = createEventDispatcher();
 
@@ -111,6 +115,9 @@
   }
   function handleRemove(transaction) {
     dispatch('remove', transaction);
+  }
+  function handleMove(transaction) {
+    dispatch('move', transaction);
   }
   function handleFilter() {
     dispatch('filter');
@@ -181,6 +188,17 @@
             >
               x
             </button>
+            {#if showMoveButton}
+              <button
+                type="button"
+                class="table-row-button move"
+                aria-label="Mover registro a otro fondo"
+                title="Mover a otro fondo"
+                on:click={() => handleMove(transaction)}
+              >
+                ↗
+              </button>
+            {/if}
           </td>
         </tr>
       {/each}
