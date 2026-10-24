@@ -21,6 +21,10 @@ $: api_base = `${API_BASE}/${fondo}/`;
   let accounts = [];
   let transactions = [];
   let summary = [];
+  let annualReport = [];
+  let showAnnualReport = false;
+  let annualReportLoading = false;
+  let annualReportError = "";
 
   // Filters
   let filter_account_id = "";
@@ -78,6 +82,20 @@ $: api_base = `${API_BASE}/${fondo}/`;
     }
   }
 
+  async function fetchAnnualReport() {
+    try {
+      annualReportLoading = true;
+      annualReportError = "";
+      const response = await fetch(api_base + "annual_report");
+      if (!response.ok) throw new Error("Error cargando el reporte anual");
+      annualReport = await response.json();
+    } catch (e) {
+      annualReportError = "Error cargando el reporte anual";
+    } finally {
+      annualReportLoading = false;
+    }
+  }
+
   function formatNumber(number) {
     if (!number) return "0";
     return String(number).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -105,7 +123,11 @@ $: api_base = `${API_BASE}/${fondo}/`;
       });
       await response.json();
       resetForm();
-      await Promise.all([fetchAccounts(), fetchTransactions()]);
+      await Promise.all([
+        fetchAccounts(),
+        fetchTransactions(),
+        showAnnualReport ? fetchAnnualReport() : Promise.resolve(),
+      ]);
     } catch (e) {
       error = "Error registrando transacción";
     } finally {
@@ -118,7 +140,11 @@ $: api_base = `${API_BASE}/${fondo}/`;
     try {
       loading = true;
       await fetch(api_base + "remove_transaction/" + transaction.id, { method: "DELETE" });
-      await Promise.all([fetchAccounts(), fetchTransactions()]);
+      await Promise.all([
+        fetchAccounts(),
+        fetchTransactions(),
+        showAnnualReport ? fetchAnnualReport() : Promise.resolve(),
+      ]);
       // Optionally, prefill form for quick edit
       account_id = transaction.account_id;
       amount = transaction.amount;
@@ -158,7 +184,11 @@ $: api_base = `${API_BASE}/${fondo}/`;
         body: JSON.stringify({ account_id, amount, type, memo, created_at }),
       });
       resetForm();
-      await Promise.all([fetchAccounts(), fetchTransactions()]);
+      await Promise.all([
+        fetchAccounts(),
+        fetchTransactions(),
+        showAnnualReport ? fetchAnnualReport() : Promise.resolve(),
+      ]);
     } catch (e) {
       error = "Error actualizando transacción";
     } finally {
@@ -189,9 +219,57 @@ $: api_base = `${API_BASE}/${fondo}/`;
     fetchTransactions();
     fetchSummary();
   }
+
+  $: if (fondo && showAnnualReport) fetchAnnualReport();
 </script>
 
 <SummaryTable {summary} {formatNumber} />
+<section class="annual-report">
+  <button
+    class="annual-report-toggle"
+    type="button"
+    aria-expanded={showAnnualReport}
+    on:click={() => (showAnnualReport = !showAnnualReport)}
+  >
+    {showAnnualReport ? "Ocultar reporte anual" : "Ver reporte anual"}
+  </button>
+
+  {#if showAnnualReport}
+    <div class="annual-report-content">
+      <h2>Gastos por año</h2>
+      {#if annualReportLoading}
+        <p>Cargando reporte…</p>
+      {:else if annualReportError}
+        <p class="annual-report-error">{annualReportError}</p>
+      {:else if annualReport.length}
+        <div class="annual-report-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Año</th>
+                <th>Construcción de obra</th>
+                <th>Resto</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each annualReport as year (year.year)}
+                <tr>
+                  <td>{year.year}</td>
+                  <td>Bs. {formatNumber(year.construction)}</td>
+                  <td>Bs. {formatNumber(year.rest)}</td>
+                  <td>Bs. {formatNumber(Number(year.construction) + Number(year.rest))}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {:else}
+        <p>No hay gastos registrados para mostrar.</p>
+      {/if}
+    </div>
+  {/if}
+</section>
 <AccountsTable accounts={accounts} {formatNumber} />
 <TransactionForm
   {accounts}
@@ -252,5 +330,48 @@ $: api_base = `${API_BASE}/${fondo}/`;
     border: none;
     border-top: 1px solid #e0e4ea;
     margin: 2rem 0 1.5rem 0;
+  }
+  .annual-report {
+    margin: 1.5rem 0;
+  }
+  .annual-report-toggle {
+    background: #7b93fa;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.7rem 1rem;
+  }
+  .annual-report-toggle:hover {
+    background: #667eea;
+  }
+  .annual-report-content {
+    margin-top: 1rem;
+  }
+  .annual-report-table-wrap {
+    overflow-x: auto;
+  }
+  .annual-report table {
+    border-collapse: collapse;
+    min-width: 600px;
+    width: 100%;
+  }
+  .annual-report th,
+  .annual-report td {
+    border-bottom: 1px solid #e0e4ea;
+    padding: 0.8rem 1rem;
+    text-align: right;
+  }
+  .annual-report th:first-child,
+  .annual-report td:first-child {
+    text-align: left;
+  }
+  .annual-report th {
+    background: #f6f8fa;
+    color: #2d3a4a;
+  }
+  .annual-report-error {
+    color: #b42318;
   }
 </style>

@@ -1,66 +1,48 @@
 <script>
   import Gastos from "./Gastos.svelte";
-  import { openLogin, onLogin } from "https://callizaya.com/api.php/auth/client.js";
+  import List from "./lib/fondos/List.svelte";
+  import { openLogin, onLogin, api } from "./lib/login";
 
-  // Obtiene el token de localStorage
-  let token = localStorage.getItem("token") || "";
-  // Obtiene datos del usuario desde localStorage (simulado aquí)
-  let userStored = JSON.parse(localStorage.getItem("user") || "{}");
-  let user = {
-    email: userStored.email || "",
-    familyName: userStored.familyName || "",
-    gender: userStored.gender || null,
-    givenName: userStored.givenName || "",
-    hd: userStored.hd || null,
-    id: userStored.id || "",
-    link: userStored.link || null,
-    locale: userStored.locale || null,
-    name: userStored.name || "",
-    picture: userStored.picture || "",
-    verifiedEmail: userStored.verifiedEmail || true
-  };
+  let user;
+  let token;
   // Fondos existentes (simulado, en real podría venir de API/localStorage)
-  let fondos = [
-    { nombre: "casita", archivado: false },
-    { nombre: "hogar", archivado: false }
-  ];
+  let fondos = [];
   let fondo = "";
   let nuevoFondo = "";
   let correo = "";
+
+  // Login handler
+  onLogin(async (login) => {
+    user = login.user;
+    token = login.token;
+    fondos = await api("fondos/man/fondos");
+  });
   
-  function seleccionarFondo(nombre) {
-    fondo = nombre;
+  function seleccionarFondo(name) {
+    fondo = name;
   }
   function crearFondo() {
-    if (nuevoFondo && !fondos.find(f => f.nombre === nuevoFondo)) {
-      fondos = [...fondos, { nombre: nuevoFondo, archivado: false }];
+    if (nuevoFondo && !fondos.find(f => f.name === nuevoFondo)) {
+      fondos = [...fondos, { name: nuevoFondo, archived: false }];
       fondo = nuevoFondo;
       nuevoFondo = "";
     }
   }
-  function archivarFondo(nombre) {
-    fondos = fondos.map(f => f.nombre === nombre ? { ...f, archivado: true } : f);
+  function archivarFondo(name) {
+    fondos = fondos.map(f => f.name === name ? { ...f, archived: true } : f);
     // Selecciona otro fondo activo si el actual se archiva
-    if (fondo === nombre) {
-      const activo = fondos.find(f => !f.archivado && f.nombre !== nombre);
-      fondo = activo ? activo.nombre : "";
+    if (fondo === name) {
+      const activo = fondos.find(f => !f.archived && f.name !== name);
+      fondo = activo ? activo.name : "";
     }
   }
-  function compartirFondo(nombre) {
+  function compartirFondo(name) {
     if (correo) {
       // Aquí iría la lógica real de compartir (API, mailto, etc)
-      alert(`Fondo '${nombre}' compartido con ${correo}`);
+      alert(`Fondo '${name}' compartido con ${correo}`);
       correo = "";
     }
   }
-  // Listen for login events
-  onLogin(({ user: newUser, token: newToken }) => {
-    token = newToken;
-    user = newUser;
-    // Guarda en localStorage
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-  });
 </script>
 
 <main>
@@ -88,11 +70,7 @@
       <section class="fondos-section">
         <h2>Mis Fondos</h2>
         <div class="fondos-list">
-          {#each fondos as f (f.nombre)}
-            {#if !f.archivado}
-              <button class="fondosel fondo-btn" on:click={() => seleccionarFondo(f.nombre)}>{f.nombre}</button>
-            {/if}
-          {/each}
+          <List {fondos} {seleccionarFondo} />
         </div>
         <div class="nuevo-fondo">
           <input type="text" placeholder="Nuevo fondo" bind:value={nuevoFondo} />
@@ -101,11 +79,11 @@
       </section>
     {:else}
       <nav class="fondos-nav">
-        {#each fondos as f (f.nombre)}
-          {#if !f.archivado}
+        {#each fondos as f (f.name)}
+          {#if !f.archived}
             <button
-              class={fondo === f.nombre ? "active fondo-btn" : "inactive fondo-btn"}
-              on:click={() => seleccionarFondo(f.nombre)}>{f.nombre}</button>
+              class={fondo === f.name ? "active fondo-btn" : "inactive fondo-btn"}
+              on:click={() => seleccionarFondo(f.name)}>{f.name}</button>
           {/if}
         {/each}
         <button class="home-btn" on:click={() => (fondo = "")}>🏠</button>
@@ -200,7 +178,7 @@
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 2px 12px #0001;
-    max-width: 420px;
+    max-width: 820px;
     margin: 2em auto 0 auto;
     padding: 2em 2em 1.5em 2em;
     display: flex;
