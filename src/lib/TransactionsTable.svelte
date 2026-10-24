@@ -94,6 +94,11 @@
   .filter-amount {
     width: 100%;
   }
+  .no-transactions {
+    padding: 1.2rem;
+    color: #667085;
+    text-align: center;
+  }
 </style>
 <script>
   import { createEventDispatcher } from 'svelte';
@@ -129,7 +134,7 @@
     <div>Cargando...</div>
   {:else if error}
     <div style="color: red">{error}</div>
-  {:else if transactions && transactions.length}
+  {:else}
     <table>
       <tr>
         <th>#</th>
@@ -200,6 +205,10 @@
               </button>
             {/if}
           </td>
+        </tr>
+      {:else}
+        <tr>
+          <td colspan="6" class="no-transactions">No se encontraron registros con esos filtros.</td>
         </tr>
       {/each}
     </table>
