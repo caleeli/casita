@@ -22,6 +22,7 @@ $: api_base = `${API_BASE}/${fondo}/`;
   let transactions = [];
   let summary = [];
   let annualReport = [];
+  let annualTotals = { construction: 0, rest: 0 };
   let showAnnualReport = false;
   let annualReportLoading = false;
   let annualReportError = "";
@@ -221,6 +222,11 @@ $: api_base = `${API_BASE}/${fondo}/`;
   }
 
   $: if (fondo && showAnnualReport) fetchAnnualReport();
+  $: annualTotals = annualReport.reduce((totals, year) => {
+    totals.construction += Number(year.construction) || 0;
+    totals.rest += Number(year.rest) || 0;
+    return totals;
+  }, { construction: 0, rest: 0 });
 </script>
 
 <SummaryTable {summary} {formatNumber} />
@@ -262,6 +268,14 @@ $: api_base = `${API_BASE}/${fondo}/`;
                 </tr>
               {/each}
             </tbody>
+            <tfoot>
+              <tr>
+                <th>Total general</th>
+                <td>Bs. {formatNumber(annualTotals.construction)}</td>
+                <td>Bs. {formatNumber(annualTotals.rest)}</td>
+                <td>Bs. {formatNumber(annualTotals.construction + annualTotals.rest)}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       {:else}
@@ -370,6 +384,12 @@ $: api_base = `${API_BASE}/${fondo}/`;
   .annual-report th {
     background: #f6f8fa;
     color: #2d3a4a;
+  }
+  .annual-report tfoot th,
+  .annual-report tfoot td {
+    background: #eef2ff;
+    border-top: 2px solid #cbd5e1;
+    font-weight: 700;
   }
   .annual-report-error {
     color: #b42318;
