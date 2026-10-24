@@ -116,6 +116,11 @@ $: api_base = `${API_BASE}/${fondo}/`;
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "No se pudieron cargar las cuentas");
       moveAccounts = result;
+      const sourceAccountName = String(movingTransaction?.name || "").trim().toLowerCase();
+      const matchingAccount = moveAccounts.find(
+        (account) => String(account.name || "").trim().toLowerCase() === sourceAccountName
+      );
+      moveAccountId = matchingAccount ? matchingAccount.id : "";
     } catch (e) {
       moveError = e.message || "No se pudieron cargar las cuentas del fondo";
     } finally {
