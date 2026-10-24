@@ -27,6 +27,26 @@ export function onLogin(callback) {
   callback({ user, token });
 }
 
+export function logout() {
+  token = "";
+  user = {
+    email: "",
+    familyName: "",
+    gender: null,
+    givenName: "",
+    hd: null,
+    id: "",
+    link: null,
+    locale: null,
+    name: "",
+    picture: "",
+    verifiedEmail: false
+  };
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  listeners.forEach((callback) => callback({ user, token }));
+}
+
 // Listen for login events
 baseOnLogin((login) => {
   user = login.user;

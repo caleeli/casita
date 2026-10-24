@@ -1,7 +1,7 @@
 <script>
   import Gastos from "./Gastos.svelte";
   import List from "./lib/fondos/List.svelte";
-  import { openLogin, onLogin, api } from "./lib/login";
+  import { openLogin, onLogin, api, logout } from "./lib/login";
 
   let user;
   let token;
@@ -15,6 +15,13 @@
   onLogin(async (login) => {
     user = login.user;
     token = login.token;
+    if (!token) {
+      fondos = [];
+      fondo = "";
+      nuevoFondo = "";
+      correo = "";
+      return;
+    }
     fondos = await api("fondos/man/fondos");
   });
   
@@ -65,6 +72,7 @@
         <div class="user-name">{user.name}</div>
         <div class="user-email">{user.email}</div>
       </div>
+      <button class="logout-btn" type="button" on:click={logout}>Cerrar sesión</button>
     </header>
     {#if !fondo}
       <section class="fondos-section">
@@ -146,6 +154,7 @@
     display: flex;
     align-items: center;
     gap: 1em;
+    flex-wrap: wrap;
     background: #fff;
     border-radius: 0 0 16px 16px;
     box-shadow: 0 2px 12px #0001;
@@ -173,6 +182,19 @@
   .user-email {
     font-size: 0.98em;
     color: #666;
+  }
+  .logout-btn {
+    margin-left: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.6em 0.9em;
+    background: #fff;
+    color: #344054;
+    font-size: 0.95em;
+    cursor: pointer;
+  }
+  .logout-btn:hover {
+    background: #f1f5f9;
   }
   .fondos-section {
     background: #fff;
