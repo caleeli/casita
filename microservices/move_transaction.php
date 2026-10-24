@@ -29,22 +29,23 @@ if (!is_file($targetDb)) {
     return ['error' => 'No se encontró la base de datos del fondo de destino'];
 }
 
-$attached = false;
 try {
     $connection->exec('ATTACH DATABASE ' . $connection->quote($targetDb) . ' AS target_fund');
-    $attached = true;
     $connection->beginTransaction();
 
     $transactionQuery = $connection->prepare('SELECT * FROM transactions WHERE id = :id');
     $transactionQuery->execute([':id' => $transactionId]);
     $transaction = $transactionQuery->fetch(PDO::FETCH_ASSOC);
+    $transactionQuery->closeCursor();
     if (!$transaction) {
         throw new RuntimeException('No se encontró el registro de origen', 404);
     }
 
     $targetAccount = $connection->prepare('SELECT id FROM target_fund.accounts WHERE id = :id');
     $targetAccount->execute([':id' => $targetAccountId]);
-    if (!$targetAccount->fetchColumn()) {
+    $targetAccountExists = $targetAccount->fetchColumn();
+    $targetAccount->closeCursor();
+    if (!$targetAccountExists) {
         throw new RuntimeException('No se encontró la cuenta de destino', 404);
     }
 
@@ -59,6 +60,7 @@ try {
         ':memo' => $transaction['memo'],
         ':created_at' => $transaction['created_at'],
     ]);
+    $insert->closeCursor();
     $newTransactionId = $connection->lastInsertId();
 
     if ((int) $transaction['type'] === 1) {
@@ -67,6 +69,7 @@ try {
         $balanceChange = $connection->prepare('UPDATE target_fund.accounts SET balance = balance - :amount WHERE id = :id');
     }
     $balanceChange->execute([':amount' => $transaction['amount'], ':id' => $targetAccountId]);
+    $balanceChange->closeCursor();
 
     if ((int) $transaction['type'] === 1) {
         $balanceChange = $connection->prepare('UPDATE accounts SET balance = balance - :amount WHERE id = :id');
@@ -74,10 +77,13 @@ try {
         $balanceChange = $connection->prepare('UPDATE accounts SET balance = balance + :amount WHERE id = :id');
     }
     $balanceChange->execute([':amount' => $transaction['amount'], ':id' => $transaction['account_id']]);
+    $balanceChange->closeCursor();
 
     $delete = $connection->prepare('DELETE FROM transactions WHERE id = :id');
     $delete->execute([':id' => $transactionId]);
-    if ($delete->rowCount() !== 1) {
+    $deletedRows = $delete->rowCount();
+    $delete->closeCursor();
+    if ($deletedRows !== 1) {
         throw new RuntimeException('No se pudo quitar el registro del fondo de origen', 409);
     }
 
@@ -87,10 +93,6 @@ try {
         $connection->rollBack();
     }
     throw $e;
-} finally {
-    if ($attached) {
-        $connection->exec('DETACH DATABASE target_fund');
-    }
 }
 
 return [
