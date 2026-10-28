@@ -10,19 +10,37 @@
   let fondo = "";
   let nuevoFondo = "";
   let correo = "";
+  let fondosLoading = false;
+  let fondosError = "";
+  let fondosRequest = 0;
 
   // Login handler
   onLogin(async (login) => {
+    const request = ++fondosRequest;
     user = login.user;
-    token = login.token;
+    token = login.token || "";
+    fondos = [];
+    fondo = "";
+    nuevoFondo = "";
+    correo = "";
+    fondosLoading = false;
+    fondosError = "";
+
     if (!token) {
-      fondos = [];
-      fondo = "";
-      nuevoFondo = "";
-      correo = "";
       return;
     }
-    fondos = await api("fondos/man/fondos");
+
+    fondosLoading = true;
+    try {
+      const fondosCargados = await api("fondos/man/fondos");
+      if (request === fondosRequest) fondos = fondosCargados;
+    } catch (error) {
+      if (request === fondosRequest && token) {
+        fondosError = "No se pudieron cargar los fondos. Intenta recargar la página.";
+      }
+    } finally {
+      if (request === fondosRequest) fondosLoading = false;
+    }
   });
   
   function seleccionarFondo(name) {
@@ -77,13 +95,19 @@
     {#if !fondo}
       <section class="fondos-section">
         <h2>Mis Fondos</h2>
-        <div class="fondos-list">
-          <List {fondos} {seleccionarFondo} />
-        </div>
-        <div class="nuevo-fondo">
-          <input type="text" placeholder="Nuevo fondo" bind:value={nuevoFondo} />
-          <button class="crear-btn" on:click={crearFondo}>Crear fondo</button>
-        </div>
+        {#if fondosLoading}
+          <p role="status">Cargando tus fondos…</p>
+        {:else if fondosError}
+          <p role="alert">{fondosError}</p>
+        {:else}
+          <div class="fondos-list">
+            <List {fondos} {seleccionarFondo} />
+          </div>
+          <div class="nuevo-fondo">
+            <input type="text" placeholder="Nuevo fondo" bind:value={nuevoFondo} />
+            <button class="crear-btn" on:click={crearFondo}>Crear fondo</button>
+          </div>
+        {/if}
       </section>
     {:else}
       <nav class="fondos-nav">
